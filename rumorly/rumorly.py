@@ -8,6 +8,22 @@ the 24th International Conference on World Wide Web. ACM, 2015.
 http://dl.acm.org/citation.cfm?id=2741637
 """
 
+import json
+import pandas as pd
+from datetime import datetime
+import time
+import re
+
+tweets_raw = open("abc.txt", 'r')
+tweets_data=tweets_raw.read()
+#loads data into a dataframe
+tweets = []
+for line in open('abc.txt'):
+            try:
+                tweets.append(json.loads(line))
+            except:
+                 pass   
+
 def is_signal_tweet(tweet):
     """identifies a tweet as signal or not using the following RegEx
 
