@@ -20,6 +20,18 @@ def is_signal_tweet(tweet):
     @param: input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
+    df=pd.DataFrame(tweets)
+#extract tweets which are replies of other tweets
+df1=df[df['in_reply_to_status_id'].notnull()]
+df2=pd.DataFrame()
+#check for pattern matching 
+df2=df1.text.str.contains('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',regex=True)
+is_true=pd.Series(df2)
+print(is_true)
+df3=df1[is_true]
+rt_data=pd.DataFrame()
+rt_data=df.merge(df3[['in_reply_to_status_id']].drop_duplicates(), left_on='id', right_on='in_reply_to_status_id', how='right')
+return rt_data
     pass
 
 
