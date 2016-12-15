@@ -8,6 +8,22 @@ the 24th International Conference on World Wide Web. ACM, 2015.
 http://dl.acm.org/citation.cfm?id=2741637
 """
 
+import json
+import pandas as pd
+from datetime import datetime
+import time
+import re
+
+tweets_raw = open("abc.txt", 'r')
+tweets_data=tweets_raw.read()
+#loads data into a dataframe
+tweets = []
+for line in open('abc.txt'):
+            try:
+                tweets.append(json.loads(line))
+            except:
+                 pass   
+
 def is_signal_tweet(tweet):
     """identifies a tweet as signal or not using the following RegEx
 
@@ -20,6 +36,18 @@ def is_signal_tweet(tweet):
     @param: input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
+    df=pd.DataFrame(tweets)
+#extract tweets which are replies of other tweets
+df1=df[df['in_reply_to_status_id'].notnull()]
+df2=pd.DataFrame()
+#check for pattern matching 
+df2=df1.text.str.contains('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',regex=True)
+is_true=pd.Series(df2)
+print(is_true)
+df3=df1[is_true]
+rt_data=pd.DataFrame()
+rt_data=df.merge(df3[['in_reply_to_status_id']].drop_duplicates(), left_on='id', right_on='in_reply_to_status_id', how='right')
+return rt_data
     pass
 
 
