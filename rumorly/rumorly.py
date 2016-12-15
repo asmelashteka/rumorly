@@ -23,7 +23,24 @@ def is_signal_tweet(tweet):
     pass
 
 
-def gen_signal_clusters(stream, duration):
+def connected_components(g):
+    """Finds the connected components of a graph g"""
+    pass
+
+
+def gen_undirected_graph(min_hashes, threshold=0.6):
+    """Generate undirected graph of minhashes"""
+    pass
+
+
+def min_hash(tweet):
+    """Generates a minhash for a tweet
+    example repo https://github.com/ekzhu/datasketch
+    """
+    pass
+
+
+def gen_signal_clusters(tweets):
     """clusters signal tweets based on overlapping content in tweets
 
     An undirected graph of tweets is built by including an edge joining
@@ -31,7 +48,13 @@ def gen_signal_clusters(stream, duration):
     efficiently compute the jaccard similarity. The connected components
     in this graph are the clusters.
     """
-    pass
+    min_hashes = []
+    for tweet in tweets:
+        h = min_hash(tweet)
+        min_hashes.append(h)
+
+    g = gen_undirected_graph(min_hashes, threshold=0.6)
+    return connected_components(g)
 
 
 def extract_summary(cluster):
@@ -43,7 +66,7 @@ def extract_summary(cluster):
     pass
 
 
-def capture_non_signal_tweets():
+def assign_cluster_to_non_signal_tweets():
     """capture all non-signal tweets that match any cluster
     """
     pass
@@ -52,6 +75,12 @@ def capture_non_signal_tweets():
 def rank_candidate_clusters():
     """rank candidate clusters in order of likelihood
     that their statements are rumors
+
+    statistical features e.g.,
+    percentage of signal tweets,
+    avg tweet length,
+    nof tweets,
+    nof retweets
     """
     pass
 
