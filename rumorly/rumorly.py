@@ -44,7 +44,6 @@ def is_signal_tweet(tweet):
     @param: input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
-    tweet_id=tweet['id']
             texts=tweet['text']
             true_val=bool(re.search('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',texts))
             if true_val==True:
@@ -57,21 +56,54 @@ def is_signal_tweet(tweet):
 
 def connected_components(g):
     """Finds the connected components of a graph g"""
-    pass
+            conn_comp=sorted(nx.connected_components(graph),key=len,reverse=True)
+            req_conn_comp=[]
+            for each_cluster in conn_comp:
+                                   if (len(each_cluster)>3):
+                                                req_conn_comp.append(each_cluster)
+                                   else:
+                                                pass
+            return req_conn_comp
 
 
 def gen_undirected_graph(min_hashes, threshold=0.6):
     """Generate undirected graph of minhashes"""
-    pass
-
+            k=list(minhashes.keys())
+            l=list(minhashes.values())
+            for i in range(0,len(k)-1):
+                        for j in range((i+1),len(k)):
+                                    a=l[i]
+                                    b=l[j]
+                                    c=jaccard_similarity(a,b)
+                                    if (c>treshold):##change this 
+                                                g.add_edge(k[i],k[j])
+                                    else:
+                                                g.add_node(k[i])
+                                                g.add_node(k[j])
+            nx.draw(g,with_labels=True)
+            #plt.show()
+            return g
 
 def min_hash(tweet):
     """Generates a minhash for a tweet
-    example repo https://github.com/ekzhu/datasketch
-    """
-    pass
-
-
+   "" example repo https://github.com/ekzhu/datasketch""
+  
+            texts=tweet['text']
+            docid=tweet['id']
+            sentence=(texts.translate(non_bmp_map))
+            words = sentence.split(" ")
+            shinglesInDoc = set()
+            for index in range(0, len(words) - 2):
+                        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+                        shinglesInDoc.add(shingle)
+            m = MinHash(num_perm=50)
+            for d in shinglesInDoc:
+                        m.update(d.encode('utf8'))
+            minhashes.update({docid:m})
+            pass
+def jaccard_similarity(a,b):
+            return a.jaccard(b)
+            
 def gen_signal_clusters(tweets):
     """clusters signal tweets based on overlapping content in tweets
 
@@ -95,13 +127,68 @@ def extract_summary(cluster):
     output the most frequent and continuous substrings (3-grams that
     appear in more than 80% of the tweets) in order.
     """
-    pass
+                        pres_cluster=cluster
+                        no_of_tweets=len(pres_cluster)
+                        req_cutoff=0.8*no_of_tweets
+                        words_list=[]
+                        cluster_df=signal_tweets['id'].isin(req_cluster)
+                        tr_val=pd.Series(cluster_df)
+                        present_df=signal_tweets[tr_val]
+                        for index,row in present_df.iterrows():
+                                    shinglesincluster ={}
+                                    texts=row['text']
+                                    docid=row['id']
+                                    sentence=(texts.translate(non_bmp_map))
+                                    words = sentence.split(" ")
+                                    #print(words)
+                                    for index in range(0, len(words) - 2):
+                                                shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+                                                shinglesincluster.update({docid:shingle})
+                                                #print(shinglesincluster)
+                                                tot=Counter(shinglesincluster.values())
+                                                ngrams=list(tot.keys())
+                                                freq=list(tot.values())
+                                                for i in range(len(freq)):
+                                                            x=freq[i]
+                                                            y=ngrams[i]
+                                                            if x<req_cutoff:#change this
+                                                                        words_list.append(y)
+                                                            else:
+                                                                        pass
+                        sent=[]
+                        sent= ' '.join(words_list)
+                        words=sent.split()
+                        wordlist=[]
+                        sentence=[]
+                        for word in words:
+                                    if word not in wordlist:
+                                                wordlist.append(word)
+                                                sentence=' '.join(wordlist)
+                        return sentence
 
 
-def assign_cluster_to_non_signal_tweets():
+def assign_cluster_to_non_signal_tweets(sentence):
     """capture all non-signal tweets that match any cluster
     """
-    pass
+                        shingles_in_sent=set()
+                        sent_tokens=sentence.split()
+                        for index in range(0, len(sent_tokens) - 2):
+                                    shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+                                    shingles_in_sent.add(shingle)
+                        m=MinHash(num_perm=50)
+                        for d in shinglesInDoc:
+                                    m.update(d.encode('utf8'))
+                        sent_minhash=m
+                        a=list(non_signal_minhashes.keys())
+                        b=list(non_signal_minhashes.values())
+                        for s in range(len(b)):
+                                    x=b[s]
+                                    y=a[s]
+                                    j=jaccard_similarity(x,sent_minhash)
+                                    if j>treshold:
+                                                cluster.add(y)
+                                    else:
+                                                pass
 
 
 def rank_candidate_clusters():
