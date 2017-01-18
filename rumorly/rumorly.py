@@ -56,7 +56,7 @@ def is_signal_tweet(tweet):
 
 def connected_components(g):
     """Finds the connected components of a graph g"""
-            conn_comp=sorted(nx.connected_components(graph),key=len,reverse=True)
+            conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
             req_conn_comp=[]
             for each_cluster in conn_comp:
                                    if (len(each_cluster)>3):
