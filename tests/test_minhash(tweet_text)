@@ -1,0 +1,39 @@
+from datasketch import MinHash,MinHashLSH
+import sys
+import re
+
+
+non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
+minhashes={}
+lsh=MinHashLSH(threshold=0.6, num_perm=50)
+
+
+def minhash(tweet_text):
+    sentence=(tweet_text.translate(non_bmp_map))
+    words = sentence.split(" ")
+    shinglesInDoc =[]
+    for index in range(0, len(words) - 2):
+        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+        shinglesInDoc.append(shingle)
+    m=MinHash(num_perm=50)
+    for d in shinglesInDoc:
+        m.update(d.encode('utf8'))
+    lsh.insert("%s"%tweet_text,m)
+    minhashes.update({tweet_text:m})
+    return m
+
+a=minhash("really?Germanwings Airbus A320 crashes in French Alps near Digne http:\/\/t.co\/yNlWbNJmYI")
+
+b=minhash("\u201c@BBCBreaking: Germanwings Airbus A320 crashes in French Alps near Digne http://t.co/VyfwZhDhtc\u201d another plane crash.. Oh God.")
+
+c=minhash("\u201c@BBCBreaking: Germanwings Airbus A320 crashes in French Alps near Digne http://t.co/0RVUOUMD4z\u201d")
+
+
+
+"output:
+
+<datasketch.minhash.MinHash object at 0x05EE52D8>
+<datasketch.minhash.MinHash object at 0x0612D7D8>
+<datasketch.minhash.MinHash object at 0x0612D670>
+
+"
