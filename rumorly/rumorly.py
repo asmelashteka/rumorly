@@ -13,29 +13,26 @@ import json
 import numpy as np
 import pandas as pd
 from datasketch import MinHash, MinHashLSH
+from scipy import stats as scistat 
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
 from collections import Counter
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
-signal_tweets=[]
+lsh_signal=MinHashLSH(threshold=0.6,num_perm=50)
+lsh_non_signal=MinHashLSH(threshold=0.6,num_perm=50)
 g=nx.Graph()
-non_signal_tweets=[]
-minhashes={}
-lsh=MinHashLSH(threshold=0.6,num_perm=50)
-minhashes={}
-
-tweets_raw = open("abc.txt", 'r')
-tweets_data=tweets_raw.read()
 tweets = []
-for line in open('abc.txt'):
-    try:
-        tweets.append(json.loads(line))
-    except:
-         pass   
+signal_tweets=[]
+non_signal_tweets=[]
+signal_minhashes={}
+non_signal_minhashes={}
 
-def is_signal_tweet(tweet_text):
+
+
+
+def is_signal_tweet(tweet_text):               ####check for signal and append the tweets to list of signal or non_signal_tweets
     """identifies a tweet as signal or not using the following RegEx
 
     is (that | this | it) true
@@ -54,9 +51,32 @@ def is_signal_tweet(tweet_text):
         return True
     else:
         return False
+    
+    
+def minhash(tweet_text,signal_minhashes,lsh_signal):   ###generate minhash and insert into respective index and minhash dictionaries
+    sentence=(tweet_text.translate(non_bmp_map))
+    words = sentence.split(" ")
+    shinglesInDoc = set()
+    for index in range(0, len(words) - 2):
+        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+        shinglesInDoc.add(shingle)
+    m = MinHash(num_perm=50)
+    for d in shinglesInDoc:
+        m.update(d.encode('UTF-8'))
+    signal_minhashes.update({tweet_id:m})
+    lsh_signal.insert("%d"%tweet_id,m)
+    return m
 
+def gen_undirected_graph(min_hashes):    ###from list of minhashes(signal or non_signal), for each minhash, query the lsh index and form a graph with ouput values
+    for tweet,each_minhash in minhash.items():
+        similar=lsh.query(each_minhash)
+        for each_element in similar:
+            g.add_edge(tweet,each_element)
+    nx.draw(g,with_labels=True)
+    plt.show()
+    return g
 
-def connected_components(g):
+def connected_components(g):  ####from the graph, extract the set of tweets which have more than 3 tweets in each set
     """Finds the connected components of a graph g"""
     conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
     req_conn_comp=[]
@@ -64,32 +84,9 @@ def connected_components(g):
         if (len(each_cluster)>3):
             req_conn_comp.append(each_cluster)
         else:
-            pass
-                   
+            pass               
     return req_conn_comp
 
-
-def gen_undirected_graph(min_hashes):
-    for tweets,each_minhash in minhash.items():
-        similar=lsh.query(each_minhash)
-        for each_element in similar:
-            g.add_edge(tweets,each_element)
-    nx.draw(g,with_labels=True)
-    plt.show()
-    return g
-
-def minhash(tweet_text):
-    p=tweet_text.split()
-    m=MinHash(num_perm=50)
-    trigram=[]
-    for i in range(len(p)-2):
-        trigram.append(p[i]+p[i+1]+p[i+2])
-        i=i+2
-    for d in trigram:
-        m.update(d.encode('UTF-8'))
-    minhashes.update({tweet_text:m})
-    lsh.insert("%s"%tweet_text,m)
-    return m
             
 def gen_signal_clusters(tweets):
     """clusters signal tweets based on overlapping content in tweets
@@ -108,7 +105,7 @@ def gen_signal_clusters(tweets):
     return connected_components(g)
 
 
-def extract_summary(cluster):
+def extract_summary(cluster):  ##cluster is the each set of tweets in the req_conn_comp
     """extracts statement that summarizes the tweets in a signal cluster
 
     output the most frequent and continuous substrings (3-grams that
@@ -139,7 +136,7 @@ def extract_summary(cluster):
     return sentence
 
 
-def assign_cluster_to_non_signal_tweets(sentence):
+def assign_cluster_to_non_signal_tweets(sentence):  ####form minhash of sentence,create minhashes of non_signal_tweets,query sentence_minhash with non_signal minahshes lsh 
     """capture all non-signal tweets that match any cluster
     """
     shingles_in_sent=set()
@@ -167,7 +164,8 @@ def rank_candidate_clusters():
     nof tweets,
     nof retweets
     """
-    false_tweets_ids=[]
+"""   
+false_tweets_ids=[]
 true_tweets_ids=[]
 false_tweets=[]
 true_tweets=[]
@@ -214,6 +212,8 @@ for each in true_tweets:
         true_signal_tweets.append(each)
     else:
         pass
+ 
+ """
 
 
 
@@ -352,13 +352,6 @@ def statistical_features(all_tweets,signal_tweets):
     f12=feat12(signal_tweets)
     f13=feat13(all_tweets)
     return [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]
-
-
-rumor_features=statistical_features(true_tweets,true_signal_tweets)
-non_rumor_features=statistical_features(fasle_tweets,false_signal_tweets)
-
-
-training_set=[[list(training_set) for training_set in zip(rumor_features,non_rumor_features)]
 
 
 def gen_stream():
