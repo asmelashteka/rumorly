@@ -21,6 +21,8 @@ signal_tweets=[]
 g=nx.Graph()
 non_signal_tweets=[]
 minhashes={}
+lsh=MinHashLSH(threshold=0.6,num_perm=50)
+minhashes={}
 
 tweets_raw = open("abc.txt", 'r')
 tweets_data=tweets_raw.read()
@@ -32,7 +34,7 @@ for line in open('abc.txt'):
             except:
                  pass   
 
-def is_signal_tweet(tweet):
+def is_signal_tweet(tweet_text):
     """identifies a tweet as signal or not using the following RegEx
 
     is (that | this | it) true
@@ -44,29 +46,28 @@ def is_signal_tweet(tweet):
     @param: input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
-            texts=tweet['text']
-            true_val=bool(re.search('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',texts))
-            if true_val==True:
-                        signal_tweets.append(tweet)
-            else:
-                        non_signal_tweets.append(tweet)
-
-            pass
+    sentence=(tweet_text.translate(non_bmp_map))
+    mat=re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE
+                 )
+    if mat:
+        return True
+    else:
+        return False
 
 
 def connected_components(g):
     """Finds the connected components of a graph g"""
-            conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
-            req_conn_comp=[]
-            for each_cluster in conn_comp:
-                                   if (len(each_cluster)>3):
-                                                req_conn_comp.append(each_cluster)
-                                   else:
-                                                pass
-            return req_conn_comp
+    conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
+    req_conn_comp=[]
+    for each_cluster in conn_comp:
+                           if (len(each_cluster)>3):
+                                        req_conn_comp.append(each_cluster)
+                           else:
+                                        pass
+    return req_conn_comp
 
 
-def gen_undirected_graph(min_hashes, threshold=0.6):
+def gen_undirected_graph(min_hashes):
     """Generate undirected graph of minhashes"""
             k=list(minhashes.keys())
             l=list(minhashes.values())
@@ -84,25 +85,18 @@ def gen_undirected_graph(min_hashes, threshold=0.6):
             #plt.show()
             return g
 
-def min_hash(tweet):
-    """Generates a minhash for a tweet
-   "" example repo https://github.com/ekzhu/datasketch""
-  
-            texts=tweet['text']
-            docid=tweet['id']
-            sentence=(texts.translate(non_bmp_map))
-            words = sentence.split(" ")
-            shinglesInDoc = set()
-            for index in range(0, len(words) - 2):
-                        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
-                        shinglesInDoc.add(shingle)
-            m = MinHash(num_perm=50)
-            for d in shinglesInDoc:
-                        m.update(d.encode('utf8'))
-            minhashes.update({docid:m})
-            pass
-def jaccard_similarity(a,b):
-            return a.jaccard(b)
+def minhash(tweet_text):
+    p=tweet_text.split()
+    m=MinHash(num_perm=50)
+    trigram=[]
+    for i in range(len(p)-2):
+        trigram.append(p[i]+p[i+1]+p[i+2])
+        i=i+2
+    for d in trigram:
+        m.update(d.encode('UTF-8'))
+    minhashes.update({tweet_text:m})
+    lsh.insert("%s"%tweet_text,m)
+    return m
             
 def gen_signal_clusters(tweets):
     """clusters signal tweets based on overlapping content in tweets
