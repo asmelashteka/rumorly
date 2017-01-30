@@ -143,25 +143,19 @@ def extract_summary(cluster):
 def assign_cluster_to_non_signal_tweets(sentence):
     """capture all non-signal tweets that match any cluster
     """
-                        shingles_in_sent=set()
-                        sent_tokens=sentence.split()
-                        for index in range(0, len(sent_tokens) - 2):
-                                    shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
-                                    shingles_in_sent.add(shingle)
-                        m=MinHash(num_perm=50)
-                        for d in shinglesInDoc:
-                                    m.update(d.encode('utf8'))
-                        sent_minhash=m
-                        a=list(non_signal_minhashes.keys())
-                        b=list(non_signal_minhashes.values())
-                        for s in range(len(b)):
-                                    x=b[s]
-                                    y=a[s]
-                                    j=jaccard_similarity(x,sent_minhash)
-                                    if j>treshold:
-                                                cluster.add(y)
-                                    else:
-                                                pass
+    shingles_in_sent=set()
+    string=(tweet_text.translate(non_bmp_map))
+    sent_tokens=string.split()
+    for index in range(0, len(sent_tokens) - 2):
+        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+        shingles_in_sent.add(shingle)
+    m=MinHash(num_perm=50)
+    for d in shinglesInDoc:
+        m.update(d.encode('UTF-8'))
+    similar_nonsignal_tweets=lsh_non_signal.query(m)
+    return similar_nonsignal_tweets    
+                        
+                                 
 
 
 def rank_candidate_clusters():
@@ -179,8 +173,172 @@ def rank_candidate_clusters():
 
 def gen_stream():
     """Generates stream of tweets"""
-    pass
+    false_tweets_ids=[]
+true_tweets_ids=[]
+false_tweets=[]
+true_tweets=[]
+false_signal_tweets=[]
+true_signal_tweets=[]
+for keys,values in train_set.items():
+            if values=='false':
+                        false_tweets_ids.append(keys)
+            elif values=='true':
+                       true_tweets_ids.append(keys)
+            else:
+                        pass
+false_tweets_ids=[int(i) for i in false_tweets_ids]
 
+true_tweets_ids=[int(i) for i in true_tweets_ids]
+
+
+
+for each_id in false_tweets_ids:
+    for each_tweet in tweets:
+        if each_id==each_tweet['id']:
+            false_tweets.append(each_tweet)
+for each_id in true_tweets_ids:
+    for each_tweet in tweets:
+        if each_id==each_tweet['id']:
+            true_tweets.append(each_tweet)
+
+
+for each in false_tweets:
+    texts=each['text']
+    sentence=(texts.translate(non_bmp_map))
+    mat=re.match('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',sentence)
+    if mat:
+        false_signal_tweets.append(each)
+    else:
+        pass
+
+
+for each in true_tweets:
+    texts=each['text']
+    sentence=(texts.translate(non_bmp_map))
+    mat=re.match('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',sentence)
+    if mat:
+        true_signal_tweets.append(each)
+    else:
+        pass
+
+
+
+def feat1(all_tweets,signal_tweets):
+    a=len(signal_tweets)
+    b=len(all_tweets)
+    c=a/b
+    return c
+
+
+def feat2():
+
+
+def feat3(signal_tweets):
+    l=[]
+    for each in signal_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        words=sentence.split(" ")
+        l.append(len(words))
+    return np.mean(l)
+
+
+def feat4(all_tweets):
+    a=feat3(all_tweets)
+    return a
+
+
+def feat5(signal_tweets,all_tweets):
+    a=feat3(signal_tweets)
+    b=feat3(all_tweets)
+    return (a/b)
+
+
+def feat6(signal_tweets):
+    signal_retweets=0
+    for each in signal_tweets:
+        for each_key in each.keys():
+            if each_key=='retweeted_status':
+                signal_tweets=signal_retweets+1
+    
+    b=(signal_retweets/len(signal_tweets))
+    return b
+
+def feat7(all_tweets):
+    d=feat6(all_tweets)
+    return d
+
+
+def feat8(signal_tweets):
+    url_count=[]
+    for each in signal_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        words=sentence.split(" ")
+        i=words.count("http:")
+        j=words.count("https:")
+        k=a+b
+        url_count.apend(k)
+    return np.mean(url_count)
+
+def feat9(all_tweets):
+    c=feat8(all_tweets)
+    return c
+
+def feat10(signal_tweets):
+    c=[]
+    for each in signal_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        s=re.findall('(?<=^|(?<=[^a-zA-Z0-9-\.]))#([A-Za-z]+[A-Za-z0-9_]+)',sentence)
+        no_of_hash=len(s)
+        c.append(no_of_hash)
+    return np.mean(c)
+
+def feat11(all_tweets):
+    a=feat10(all_tweets)
+    return a
+
+def feat12(signal_tweets):
+    c=[]
+    for each in signal_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        s=re.findall('(?<=^|(?<=[^a-zA-Z0-9-\.]))@([A-Za-z]+[A-Za-z0-9_]+)',sentence)
+        no_of_hash=len(s)
+        c.append(no_of_hash)
+    return np.mean(c)
+
+def feat13(all_tweets):
+    a=feat12(all_tweets)
+    return a
+
+
+
+
+def statistical_features(all_tweets,signal_tweets):
+    f1=feat1(all_tweets,signal_tweets)
+    f2=feat2()
+    f3=feat3(signal_tweets)
+    f4=feat4(all_tweets)
+    f5=feat5(signal_tweets,all_tweets)
+    f6=feat6(signal_tweets)
+    f7=feat7(all_tweets)
+    f8=feat8(signal_tweets)
+    f9=feat9(all_tweets)
+    f10=feat10(signal_tweets)
+    f11=feat11(all_tweets)
+    f12=feat12(signal_tweets)
+    f13=feat13(all_tweets)
+    return [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]
+
+
+rumor_features=statistical_features(true_tweets,true_signal_tweets)
+non_rumor_features=statistical_features(fasle_tweets,false_signal_tweets)
+
+
+training_set=[[list(training_set) for training_set in zip(rumor_features,non_rumor_features)]
+    
 
 def pipeline():
     """real-time rumor detection pipeline"""
