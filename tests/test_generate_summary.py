@@ -28,7 +28,6 @@ def extract_summary(cluster):
 
     return sent
 
-
 a=extract_summary({'there is a plane crash in atlantic','is is true that there is a plane crash',
                   'i have seen the plane crash'})
 
@@ -37,3 +36,10 @@ b=extract_summary({'airwings flight has crashed in alps','is it true that airwin
 
 print(a)
 print(b)
+
+
+
+"output:
+there is a a plane crash is a plane is true that have seen the the plane crash that there is crash in atlantic seen the plane i have seen is is true plane crash in true that there
+that airwings plane flight has crashed airwings plane from is it true from dusseldorf has has crashed in dusseldorf has crashed? crashed in apls breaking:airplane crashed in it true that plane from dusseldorf crashed in alps true that airwings airwings flight has
+    "
