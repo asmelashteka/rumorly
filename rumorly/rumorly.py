@@ -230,7 +230,37 @@ def feat1(all_tweets,signal_tweets):
     return c
 
 
-def feat2():
+def feat2(all_tweets,signal_tweets):
+    all_sent=[]
+    sig_sent=[]
+    for each_tweet in all_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        words=sentence.split(" ")
+        all_sent.append(words)
+    all_sent=reduce(lambda x,y: x+y,all_sent)
+    all_count=Counter(all_sent)
+    all_freq=list(all_count.values())
+    tot_sum=sum(all_freq)
+    for i in range(len(all_freq)):
+        all_freq[i]=all_freq[i]/tot_sum
+    all_entr=scistat.entropy(all_freq)
+
+    for each_tweet in signal_tweets:
+        texts=each['text']
+        sentence=(texts.translate(non_bmp_map))
+        words=sentence.split(" ")
+        sig_sent.append(words)
+    sig_sent=reduce(lambda x,y: x+y,sig_sent)
+    sig_count=Counter(sig_sent)
+    sig_freq=list(sig_count.values())
+    tot_sig_sum=sum(sig_freq)
+    for i in range(len(sig_freq)):
+        sig_freq[i]=sig_freq[i]/tot_sig_sum
+    sig_entr=scistat.entropy(sig_freq)
+    
+    entr=sig_entr/all_entr
+    return entr
 
 
 def feat3(signal_tweets):
@@ -338,7 +368,7 @@ non_rumor_features=statistical_features(fasle_tweets,false_signal_tweets)
 
 
 training_set=[[list(training_set) for training_set in zip(rumor_features,non_rumor_features)]
-    
+ 
 
 def pipeline():
     """real-time rumor detection pipeline"""
