@@ -59,10 +59,8 @@ def feat2(all_tweets,signal_tweets):
     for i in range(len(sig_freq)):
         sig_freq[i]=sig_freq[i]/tot_sig_sum
     sig_entr=scistat.entropy(sig_freq)
-    
     entr=sig_entr/all_entr
     return entr
-
 
 def feat3(signal_tweets):
     l=[]
