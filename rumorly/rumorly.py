@@ -114,7 +114,6 @@ def extract_summary(cluster):
     output the most frequent and continuous substrings (3-grams that
     appear in more than 80% of the tweets) in order.
     """
-    def extract_summary(cluster):
     no_of_tweets=len(cluster)
     req_cutoff=0.8*no_of_tweets
     words_list=[]
