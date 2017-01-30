@@ -16,7 +16,9 @@ from datasketch import MinHash, MinHashLSH
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
+from collections import Counter
 
+non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 signal_tweets=[]
 g=nx.Graph()
 non_signal_tweets=[]
@@ -26,7 +28,6 @@ minhashes={}
 
 tweets_raw = open("abc.txt", 'r')
 tweets_data=tweets_raw.read()
-#loads data into a dataframe
 tweets = []
 for line in open('abc.txt'):
             try:
@@ -60,30 +61,22 @@ def connected_components(g):
     conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
     req_conn_comp=[]
     for each_cluster in conn_comp:
-                           if (len(each_cluster)>3):
-                                        req_conn_comp.append(each_cluster)
-                           else:
-                                        pass
+        if (len(each_cluster)>3):
+            req_conn_comp.append(each_cluster)
+        else:
+            pass
+                   
     return req_conn_comp
 
 
 def gen_undirected_graph(min_hashes):
-    """Generate undirected graph of minhashes"""
-            k=list(minhashes.keys())
-            l=list(minhashes.values())
-            for i in range(0,len(k)-1):
-                        for j in range((i+1),len(k)):
-                                    a=l[i]
-                                    b=l[j]
-                                    c=jaccard_similarity(a,b)
-                                    if (c>treshold):##change this 
-                                                g.add_edge(k[i],k[j])
-                                    else:
-                                                g.add_node(k[i])
-                                                g.add_node(k[j])
-            nx.draw(g,with_labels=True)
-            #plt.show()
-            return g
+    for tweets,each_minhash in minhash.items():
+        similar=lsh.query(each_minhash)
+        for each_element in similar:
+            g.add_edge(tweets,each_element)
+    nx.draw(g,with_labels=True)
+    plt.show()
+    return g
 
 def minhash(tweet_text):
     p=tweet_text.split()
@@ -121,44 +114,30 @@ def extract_summary(cluster):
     output the most frequent and continuous substrings (3-grams that
     appear in more than 80% of the tweets) in order.
     """
-                        pres_cluster=cluster
-                        no_of_tweets=len(pres_cluster)
-                        req_cutoff=0.8*no_of_tweets
-                        words_list=[]
-                        cluster_df=signal_tweets['id'].isin(req_cluster)
-                        tr_val=pd.Series(cluster_df)
-                        present_df=signal_tweets[tr_val]
-                        for index,row in present_df.iterrows():
-                                    shinglesincluster ={}
-                                    texts=row['text']
-                                    docid=row['id']
-                                    sentence=(texts.translate(non_bmp_map))
-                                    words = sentence.split(" ")
-                                    #print(words)
-                                    for index in range(0, len(words) - 2):
-                                                shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
-                                                shinglesincluster.update({docid:shingle})
-                                                #print(shinglesincluster)
-                                                tot=Counter(shinglesincluster.values())
-                                                ngrams=list(tot.keys())
-                                                freq=list(tot.values())
-                                                for i in range(len(freq)):
-                                                            x=freq[i]
-                                                            y=ngrams[i]
-                                                            if x<req_cutoff:#change this
-                                                                        words_list.append(y)
-                                                            else:
-                                                                        pass
-                        sent=[]
-                        sent= ' '.join(words_list)
-                        words=sent.split()
-                        wordlist=[]
-                        sentence=[]
-                        for word in words:
-                                    if word not in wordlist:
-                                                wordlist.append(word)
-                                                sentence=' '.join(wordlist)
-                        return sentence
+    def extract_summary(cluster):
+    no_of_tweets=len(cluster)
+    req_cutoff=0.8*no_of_tweets
+    words_list=[]
+    shinglesincluster =[]
+    for each_tweet in cluster:
+        sente=(each_tweet.translate(non_bmp_map))
+        words = sente.split(" ")
+        for index in range(0, len(words) - 2):
+            shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
+            shinglesincluster.append(shingle)
+    tot=Counter(shinglesincluster)
+    ngrams=list(tot.keys())
+    freq=list(tot.values())
+    for i in range(len(freq)):
+        x=freq[i]
+        y=ngrams[i]
+        if x<req_cutoff:#change this
+            words_list.append(y)
+        else:
+            pass
+    sentence=[]
+    sentence= ' '.join(words_list)
+    return sentence
 
 
 def assign_cluster_to_non_signal_tweets(sentence):
