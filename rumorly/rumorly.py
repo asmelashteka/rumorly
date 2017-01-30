@@ -30,10 +30,10 @@ tweets_raw = open("abc.txt", 'r')
 tweets_data=tweets_raw.read()
 tweets = []
 for line in open('abc.txt'):
-            try:
-                tweets.append(json.loads(line))
-            except:
-                 pass   
+    try:
+        tweets.append(json.loads(line))
+    except:
+         pass   
 
 def is_signal_tweet(tweet_text):
     """identifies a tweet as signal or not using the following RegEx
@@ -167,11 +167,6 @@ def rank_candidate_clusters():
     nof tweets,
     nof retweets
     """
-    pass
-
-
-def gen_stream():
-    """Generates stream of tweets"""
     false_tweets_ids=[]
 true_tweets_ids=[]
 false_tweets=[]
@@ -342,9 +337,6 @@ def feat13(all_tweets):
     a=feat12(all_tweets)
     return a
 
-
-
-
 def statistical_features(all_tweets,signal_tweets):
     f1=feat1(all_tweets,signal_tweets)
     f2=feat2()
@@ -367,6 +359,11 @@ non_rumor_features=statistical_features(fasle_tweets,false_signal_tweets)
 
 
 training_set=[[list(training_set) for training_set in zip(rumor_features,non_rumor_features)]
+
+
+def gen_stream():
+    """Generates stream of tweets"""
+
  
 
 def pipeline():
