@@ -187,7 +187,6 @@ for each in tweets:
 c=statistical_features(tweets,signal_tweets)
 d=statistical_features(tweets,non_signal_tweets)
 
-print(d)
 
 X=np.array([c,d])
 y=[0,1]
@@ -197,6 +196,9 @@ clf.fit(X,y)
 
 print(clf.predict([[0.4629629629629629, 1.0, 14.23076923076923, 4.074074074074074, 0.0111336032388663, 0.0, 0.0, 0.0, 0.0, 0.93076923076923073, 0.10370370370370372, 0.88461538461538458, 0.65185185185185186]]))
         
+"""output:
+[1]
 
+"""
 
 
