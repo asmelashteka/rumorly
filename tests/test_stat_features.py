@@ -25,6 +25,17 @@ for line in open('abc.txt'):
                  pass
 signal_tweets=[]
 
+for each in tweets:
+    texts=each['text']
+    sentence=(texts.translate(non_bmp_map))
+    mat=re.match('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',sentence)
+    if mat:
+        signal_tweets.append(each)
+    else:
+        pass
+
+
+
 def feat1(all_tweets,signal_tweets):
     a=len(signal_tweets)
     b=len(all_tweets)
@@ -162,20 +173,13 @@ def statistical_features(all_tweets,signal_tweets):
     return [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]
 
 
-for each in tweets:
-    texts=each['text']
-    sentence=(texts.translate(non_bmp_map))
-    mat=re.match('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',sentence)
-    if mat:
-        signal_tweets.append(each)
-    else:
-        pass
+
 
 c=statistical_features(tweets,signal_tweets)
 print(c)
 
-" output:
+""" output:
 [0.037037037037037035, 1.0, 10.0, 14.074074074074074, 0.71052631578947367, 0.0, 0.0, 0.0, 0.0, 0.0, 0.70370370370370372, 0.0, 0.85185185185185186]
-"
+"""
 
 
