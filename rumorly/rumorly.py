@@ -155,7 +155,7 @@ def assign_cluster_to_non_signal_tweets(sentence):  ####form minhash of sentence
 
 
 def rank_candidate_clusters():
-    """rank candidate clusters in order of likelihood
+    """rank candidate clusters in order of likelihood  ###these tweets are used for generating training sets
     that their statements are rumors
 
     statistical features e.g.,
