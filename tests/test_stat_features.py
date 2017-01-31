@@ -25,7 +25,7 @@ for line in open('abc.txt'):
             except:
                  pass
 signal_tweets=[]
-non_signal_tweets=[]
+
 
 for each in tweets:
     texts=each['text']
@@ -35,14 +35,7 @@ for each in tweets:
         signal_tweets.append(each)
     else:
         pass
-for each in tweets:
-    texts=each['text']
-    sentence=(texts.translate(non_bmp_map))
-    mat=re.match('(is(that|this|it)true?)|(real|really?|unconfirmed)|(rumor|debunk)|((this|that|it)is not true)|wh[a]*t[?!][?]*',sentence)
-    if mat:
-        pass
-    else:
-        non_signal_tweets.append(each)
+
 
 
 
