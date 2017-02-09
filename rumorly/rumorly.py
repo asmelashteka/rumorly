@@ -63,8 +63,8 @@ def minhash(tweet_text,signal_minhashes,lsh_signal):   ###generate minhash and i
     m = MinHash(num_perm=50)
     for d in shinglesInDoc:
         m.update(d.encode('UTF-8'))
-    signal_minhashes.update({tweet_id:m})
-    lsh_signal.insert("%d"%tweet_id,m)
+    signal_minhashes.update({tweet_text:m})
+    lsh_signal.insert("%d"%tweet_text,m)
     return m
 
 def gen_undirected_graph(min_hashes):    ###from list of minhashes(signal or non_signal), for each minhash, query the lsh index and form a graph with ouput values
