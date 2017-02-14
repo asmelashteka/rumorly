@@ -127,7 +127,7 @@ def extract_summary(cluster):  ##cluster is the each set of tweets in the req_co
     for i in range(len(freq)):
         x=freq[i]
         y=ngrams[i]
-        if x<req_cutoff:#change this
+        if x>req_cutoff:
             words_list.append(y)
         else:
             pass
