@@ -372,14 +372,15 @@ def statistical_features(all_tweets,signal_tweets):
     f13=feat13(all_tweets)
     return [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]
 
-
 def gen_stream():
     """Generates stream of tweets"""
-    with gzip.open('tweets.gz') as f:
+    with gzip.open('tweets.json.gz') as f:
         for line in f:
-            yield json.loads(line)
+            try:
+                yield json.loads(line.decode('utf-8'))
+            except:
+                continue
 
- 
 
 def pipeline():
     """real-time rumor detection pipeline"""
