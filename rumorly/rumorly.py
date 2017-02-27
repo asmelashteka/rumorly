@@ -8,16 +8,17 @@ the 24th International Conference on World Wide Web. ACM, 2015.
 http://dl.acm.org/citation.cfm?id=2741637
 """
 
+import sys
 import re
 import json
+from collections import Counter
+import matplotlib.pyplot as plt
+
 import numpy as np
+
 import pandas as pd
 from datasketch import MinHash, MinHashLSH
-from scipy import stats as scistat 
 import networkx as nx
-import matplotlib.pyplot as plt
-import sys
-from collections import Counter
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 lsh_signal=MinHashLSH(threshold=0.6,num_perm=50)
@@ -30,7 +31,18 @@ signal_minhashes={}
 non_signal_minhashes={}
 
 
+#TODO:
+"""
+Remove all comments in your code of the form in line 47
+and put them into a proper docstring.
 
+A proper docstring as given in example 48 - 58
+should describe what the function does and also state the expected
+input and output.
+
+Here are good examples
+http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+"""
 
 def is_signal_tweet(tweet_text):               ####check for signal and append the tweets to list of signal or non_signal_tweets
     """identifies a tweet as signal or not using the following RegEx
@@ -44,15 +56,11 @@ def is_signal_tweet(tweet_text):               ####check for signal and append t
     @param: input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
-    sentence=(tweet_text.translate(non_bmp_map))
-    mat=re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE
-                 )
-    if mat:
-        return True
-    else:
-        return False
-    
-    
+    sentence = (tweet_text.translate(non_bmp_map))
+    matches = re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE)
+    return matches
+
+
 def minhash(tweet_text,signal_minhashes,lsh_signal):   ###generate minhash and insert into respective index and minhash dictionaries
     sentence=(tweet_text.translate(non_bmp_map))
     words = sentence.split(" ")
@@ -84,10 +92,10 @@ def connected_components(g):  ####from the graph, extract the set of tweets whic
         if (len(each_cluster)>3):
             req_conn_comp.append(each_cluster)
         else:
-            pass               
+            pass
     return req_conn_comp
 
-            
+
 def gen_signal_clusters(tweets):
     """clusters signal tweets based on overlapping content in tweets
 
@@ -149,9 +157,7 @@ def assign_cluster_to_non_signal_tweets(sentence):  ####form minhash of sentence
     for d in shinglesInDoc:
         m.update(d.encode('UTF-8'))
     similar_nonsignal_tweets=lsh_non_signal.query(m)
-    return similar_nonsignal_tweets    
-                        
-                                 
+    return similar_nonsignal_tweets
 
 
 def rank_candidate_clusters():
@@ -164,6 +170,13 @@ def rank_candidate_clusters():
     nof tweets,
     nof retweets
     """
+
+#TODO
+"""
+What's the following entire block of commented out code?
+Remove it if it's not necessary
+"""
+
 """   
 false_tweets_ids=[]
 true_tweets_ids=[]
@@ -217,6 +230,11 @@ for each in true_tweets:
 
 
 
+#TODO
+"""
+Rename all feat? function names with a short descriptive alternative
+"""
+
 def feat1(all_tweets,signal_tweets):
     a=len(signal_tweets)
     b=len(all_tweets)
@@ -252,7 +270,7 @@ def feat2(all_tweets,signal_tweets):
     for i in range(len(sig_freq)):
         sig_freq[i]=sig_freq[i]/tot_sig_sum
     sig_entr=scistat.entropy(sig_freq)
-    
+
     entr=sig_entr/all_entr
     return entr
 
@@ -284,7 +302,7 @@ def feat6(signal_tweets):
         for each_key in each.keys():
             if each_key=='retweeted_status':
                 signal_tweets=signal_retweets+1
-    
+
     b=(signal_retweets/len(signal_tweets))
     return b
 

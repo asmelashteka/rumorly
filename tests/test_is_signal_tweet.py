@@ -3,6 +3,24 @@ import pytest
 from rumorly import is_signal_tweet
 
 
+#TODO
+"""
+Change all your test suit such that
+(i) there's a description of what's being tested
+(ii) they are proper python scripts. i.e., one can type
+pytest and see the test results.
+Remove all output and report etc.
+
+Below is an example for Test-case1
+"""
+
+
+def test_name_exists():
+    """one line description of what this test case is checking"""
+    t1 = "Is it true that Obama found  a bomb?"
+    assert is_signal_tweet(t1) == True
+
+"""
 "Test-case1"
 def test_is_signal_tweet():
     t1 = "Is it true that Obama found  a bomb?"
@@ -98,4 +116,4 @@ test_is_signal_tweet.py .
 
 
 
-
+"""
