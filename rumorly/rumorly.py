@@ -45,16 +45,15 @@ Here are good examples
 http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 """
 
-def is_signal_tweet(tweet_text):               ####check for signal and append the tweets to list of signal or non_signal_tweets
+def is_signal_tweet(tweet_text):              
     """identifies a tweet as signal or not using the following RegEx
-
     is (that | this | it) true
     wh[a]*t[?!][?1]*
     ( real? | really ? | unconfirmed )
     (rumor | debunk)
     (that | this | it) is not true
-
-    @param: input tweet text
+    Args:
+    @param(str): input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
     """
     sentence = (tweet_text.translate(non_bmp_map))
@@ -62,7 +61,17 @@ def is_signal_tweet(tweet_text):               ####check for signal and append t
     return matches
 
 
-def minhash(tweet_text,signal_minhashes,lsh_signal):   ###generate minhash and insert into respective index and minhash dictionaries
+def minhash(tweet_text,minhashes_dict,lsh_index):   
+    """
+    Generate a minhash from tweet_text and appends it to dictionary with text as key and appends to lsh index
+    Args:
+    param1(str): "text" part of the tweet
+    param2(dictionary):Dictionary containing the {tweet_text:minhash(tweet_text)} items
+    param3(lsh index):LSH Dictionary optimised for a particular treshold which accepts minhash objects
+    
+    Returns:
+    Minhash value of the tweet-text
+    """
     sentence=(tweet_text.translate(non_bmp_map))
     words = sentence.split(" ")
     shinglesInDoc = set()
@@ -72,12 +81,23 @@ def minhash(tweet_text,signal_minhashes,lsh_signal):   ###generate minhash and i
     m = MinHash(num_perm=50)
     for d in shinglesInDoc:
         m.update(d.encode('UTF-8'))
-    signal_minhashes.update({tweet_text:m})
-    lsh_signal.insert("%s"%tweet_text,m)
+    minhashes_dict.update({tweet_text:m})
+    lsh_index.insert("%s"%tweet_text,m)
     return m
 
-def gen_undirected_graph(min_hashes):    ###from list of minhashes(signal or non_signal), for each minhash, query the lsh index and form a graph with ouput values
-    for tweet,each_minhash in minhash.items():
+def gen_undirected_graph(min_hashes):
+    """
+    Function generates a undirected graph of texts by querying minhash of each text against the lsh index 
+    and connecting the input with ouput texts based on threshold limit
+    
+    Args:
+    param(dictionary): Dictionary containing {text:minhash} items
+        
+    Returns:
+    Graph, where nodes are tweet_texts and edges are formed between texts if they are similar by value greater than threshold
+    
+    """
+    for tweet,each_minhash in minhashes.items():
         similar=lsh.query(each_minhash)
         for each_element in similar:
             g.add_edge(tweet,each_element)
@@ -85,8 +105,12 @@ def gen_undirected_graph(min_hashes):    ###from list of minhashes(signal or non
     plt.show()
     return g
 
-def connected_components(g):  ####from the graph, extract the set of tweets which have more than 3 tweets in each set
-    """Finds the connected components of a graph g"""
+def connected_components(g):  
+    """
+    Takes graph as input and returns the list of tweet_text clusters which contain more than threshold no of tweets in each set
+    
+    
+    """
     conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
     req_conn_comp=[]
     for each_cluster in conn_comp:
