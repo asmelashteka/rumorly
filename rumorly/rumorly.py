@@ -11,6 +11,7 @@ http://dl.acm.org/citation.cfm?id=2741637
 import sys
 import re
 import json
+import gzip
 from collections import Counter
 import matplotlib.pyplot as plt
 
@@ -374,6 +375,9 @@ def statistical_features(all_tweets,signal_tweets):
 
 def gen_stream():
     """Generates stream of tweets"""
+    with gzip.open('tweets.gz') as f:
+        for line in f:
+            yield json.loads(line)
 
  
 
