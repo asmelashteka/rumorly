@@ -22,10 +22,18 @@ from datasketch import MinHash, MinHashLSH
 import networkx as nx
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
+tweets = []
+for line in open('abc.txt'):
+            try:
+                tweets.append(json.loads(line))
+            except:
+                 pass      
+train_set={}
+for each in open('abc2.txt'):
+    train_set.update(eval(each))
 lsh_signal=MinHashLSH(threshold=0.6,num_perm=50)
 lsh_non_signal=MinHashLSH(threshold=0.6,num_perm=50)
 g=nx.Graph()
-tweets = []
 signal_tweets=[]
 non_signal_tweets=[]
 signal_minhashes={}
@@ -188,16 +196,12 @@ def assign_cluster_to_non_signal_tweets(sentence):
     return similar_nonsignal_tweets
 
 
-def rank_candidate_clusters():
-    """
-    
-    """
-
 #TODO
 """
 What's the following entire block of commented out code?
 Remove it if it's not necessary
 """
+
 def train_classifier():
     false_tweets_ids=[]
     true_tweets_ids=[]
@@ -263,7 +267,7 @@ def train_classifier():
             sentence=(texts.translate(non_bmp_map))
             words=sentence.split(" ")
             all_sent.append(words)
-        all_sent=reduce(lambda x,y: x+y,all_sent)
+        all_sent=reduce(lambda x,y:x+y,all_sent)
         all_count=Counter(all_sent)
         all_freq=list(all_count.values())
         tot_sum=sum(all_freq)
