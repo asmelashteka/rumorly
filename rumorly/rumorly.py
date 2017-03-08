@@ -66,7 +66,7 @@ def is_signal_tweet(tweet_text):
     @output: true if the tweet is a signal tweet, false otherwise
     """
     sentence = (tweet_text.translate(non_bmp_map))
-    matches = re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE)
+    matches = bool(re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE))
     return matches
 
 
