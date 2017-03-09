@@ -14,9 +14,7 @@ import json
 import gzip
 from collections import Counter
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 import pandas as pd
 from datasketch import MinHash, MinHashLSH
 import networkx as nx
@@ -24,10 +22,10 @@ import networkx as nx
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 tweets = []
 for line in open('abc.txt'):
-            try:
-                tweets.append(json.loads(line))
-            except:
-                 pass      
+    try:
+        tweets.append(json.loads(line))
+    except:
+         pass      
 train_set={}
 for each in open('abc2.txt'):
     train_set.update(eval(each))
