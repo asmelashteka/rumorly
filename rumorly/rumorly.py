@@ -13,6 +13,8 @@ import re
 import json
 import gzip
 from collections import Counter
+import random
+from random import randint
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -20,36 +22,17 @@ from datasketch import MinHash, MinHashLSH
 import networkx as nx
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
-tweets = []
-for line in open('abc.txt'):
-    try:
-        tweets.append(json.loads(line))
-    except:
-         pass      
-train_set={}
-for each in open('abc2.txt'):
-    train_set.update(eval(each))
 lsh_signal=MinHashLSH(threshold=0.6,num_perm=50)
 lsh_non_signal=MinHashLSH(threshold=0.6,num_perm=50)
 g=nx.Graph()
+all_tweets=[]
 signal_tweets=[]
 non_signal_tweets=[]
+signal_id_text={}
+non_signal_id_text={}
 signal_minhashes={}
 non_signal_minhashes={}
 
-
-#TODO:
-"""
-Remove all comments in your code of the form in line 47
-and put them into a proper docstring.
-
-A proper docstring as given in example 48 - 58
-should describe what the function does and also state the expected
-input and output.
-
-Here are good examples
-http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-"""
 
 def is_signal_tweet(tweet_text):              
     """
@@ -133,7 +116,7 @@ def extract_summary(cluster):
     """
     For each cluster extracts statement that summarizes the tweets in a signal cluster
     Args:
-    param: Set of tweet texts
+    param: Set of tweet ids
     
     Returns:
     Most frequent and continuous substrings (3-grams that
@@ -400,7 +383,7 @@ def pipeline():
                     sig_tweets.append(v)
                     
         non_sig_tweets=[]
-        sent=extract_summary(sig_tweets)####################################################################################
+        sent=extract_summary(sig_tweets)
         sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
         for each in sim_non_signal_tweets:
             for k,v in non_signal_id_text:
