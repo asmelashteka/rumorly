@@ -62,13 +62,13 @@ def is_signal_tweet(tweet_text):
     Args:
     @param(str): input tweet text
     @output: true if the tweet is a signal tweet, false otherwise
-    """
+    """              
     sentence = (tweet_text.translate(non_bmp_map))
-    matches = bool(re.search('(is\s?(that\s?|this\s[?]*|it\s?)true\s?[?]?)|(real|reall[y]*[?]*|unconfirmed)|(rumor|\\bdebunk\\b)|((this\s?|that\s?|it\s?)is\s?not\s?true)|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE))
+    matches = bool(re.search('(is\s?(that\s?|this\s?|it\s?)true\s?[?]?)|^real$|^reall[y]*[\s]?[?]*$|^unconfirmed$|rumor|debunk|(this\s?|that\s?|it\s?)is\s?not\s?true|wh[a]*[t]*[?!][?]*',sentence,re.IGNORECASE))
     return matches
 
 
-def minhash(tweet_text,minhashes_dict,lsh_index):   
+def minhash(tweet_text,tweet_id,minhashes_dict,lsh_index):   
     """
     Generate a minhash from tweet_text and appends it to dictionary with text as key and appends to lsh index
     Args:
@@ -81,18 +81,14 @@ def minhash(tweet_text,minhashes_dict,lsh_index):
     """
     sentence=(tweet_text.translate(non_bmp_map))
     words = sentence.split(" ")
-    shinglesInDoc = set()
-    for index in range(0, len(words) - 2):
-        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
-        shinglesInDoc.add(shingle)
     m = MinHash(num_perm=50)
-    for d in shinglesInDoc:
+    for d in words:
         m.update(d.encode('UTF-8'))
-    minhashes_dict.update({tweet_text:m})
-    lsh_index.insert("%s"%tweet_text,m)
+    minhashes_dict.update({tweet_id:m})
+    lsh_index.insert("%d"%tweet_id,m)
     return m
 
-def gen_undirected_graph(min_hashes):
+def generate_undirected_graph(tweet_id,min_hash):
     """
     An undirected graph of tweets is built by including an edge joining
     any tweet pair with a jaccard similarity of 0.6. Minhash is used to
@@ -106,13 +102,11 @@ def gen_undirected_graph(min_hashes):
     Graph, where nodes are tweet_texts and edges are formed between texts if they are similar by value greater than threshold
     
     """
-    for tweet,each_minhash in minhashes.items():
-        similar=lsh.query(each_minhash)
-        for each_element in similar:
-            g.add_edge(tweet,each_element)
-    nx.draw(g,with_labels=True)
-    plt.show()
-    return g
+    similar=lsh_signal.query(min_hash)
+    g.add_node(tweet_id)
+    for each in similar:
+        g.add_edge(tweet_id,each)
+    return g 
 
 def connected_components(g):  
     """
@@ -126,7 +120,7 @@ def connected_components(g):
     Clusters containing more than threshold no of tweets
     
     """
-    conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
+    cconn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
     req_conn_comp=[]
     for each_cluster in conn_comp:
         if (len(each_cluster)>3):
@@ -155,19 +149,13 @@ def extract_summary(cluster):
         for index in range(0, len(words) - 2):
             shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
             shinglesincluster.append(shingle)
-    tot=Counter(shinglesincluster)
-    ngrams=list(tot.keys())
-    freq=list(tot.values())
-    for i in range(len(freq)):
-        x=freq[i]
-        y=ngrams[i]
-        if x>req_cutoff:
-            words_list.append(y)
-        else:
-            pass
-    sentence=[]
+    tot=dict(Counter(shinglesincluster))
+    for k,v in tot.items():
+        if v>=req_cutoff:
+            words_list.append(k)
     sentence= ' '.join(words_list)
     return sentence
+    
 
 
 def assign_cluster_to_non_signal_tweets(sentence): 
@@ -182,23 +170,14 @@ def assign_cluster_to_non_signal_tweets(sentence):
     
     """
     shingles_in_sent=set()
-    string=(tweet_text.translate(non_bmp_map))
+    string=(sentence.translate(non_bmp_map))
     sent_tokens=string.split()
-    for index in range(0, len(sent_tokens) - 2):
-        shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
-        shingles_in_sent.add(shingle)
     m=MinHash(num_perm=50)
-    for d in shinglesInDoc:
+    for d in sent_tokens:
         m.update(d.encode('UTF-8'))
     similar_nonsignal_tweets=lsh_non_signal.query(m)
     return similar_nonsignal_tweets
 
-
-#TODO
-"""
-What's the following entire block of commented out code?
-Remove it if it's not necessary
-"""
 
 def train_classifier():
     false_tweets_ids=[]
@@ -399,13 +378,41 @@ def gen_stream():
 def pipeline():
     """real-time rumor detection pipeline"""
     for tweet in gen_stream():
-        if is_signal_tweet(tweet):
-            clusters = gen_signal_tweets(tweet)
+        tweet_id=tweet['id']
+        tweet_text=tweet['text'].translate(non_bmp_map)
+        true_value=is_signal_tweet(tweet_text)
+        if true_value==True:
+            signal_tweets.append(tweet)
+            signal_id_text.update({tweet_id:tweet_text})
+            minhash(tweet_text,tweet_id,signal_minhashes,lsh_signal)
         else:
-            compare_with_non_signal_tweets(tweet)
-
-        rank_candidate_clusters()
-
+            non_signal_tweets.append(tweet)
+            non_signal_id_text.update({tweet_id:tweet_text})
+            minhash(tweet_text,tweet_id,non_signal_minhashes,lsh_non_signal)
+    for key,value in signal_minhashes.items():  
+        graph=generate_undirected_graph(key,value)
+    conn_comp=connected_components(graph)
+    for each_cluster in conn_comp:
+        sig_tweets=[]
+        for each_id in each_cluster:
+            for k,v in signal_id_text.items():
+                if each_id==k:
+                    sig_tweets.append(v)
+                    
+        non_sig_tweets=[]
+        sent=extract_summary(sig_tweets)####################################################################################
+        sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
+        for each in sim_non_signal_tweets:
+            for k,v in non_signal_id_text:
+                if each==k:
+                    non_sig_tweets.append(v)
+                    
+        tot_tweets=sig_tweets+non_sig_tweets
+        features=gen_statistical_features(tot_tweets,sig_tweets)
+        #each|=set(sim_non_signal_tweets)
+        
+    
+    
 
 if __name__ == '__main__':
     pipeline()
