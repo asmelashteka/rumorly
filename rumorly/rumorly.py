@@ -21,6 +21,10 @@ import pandas as pd
 from datasketch import MinHash, MinHashLSH
 import networkx as nx
 
+
+from .twitter import STREAMING_API
+
+
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 lsh_signal=MinHashLSH(threshold=0.6,num_perm=50)
 lsh_non_signal=MinHashLSH(threshold=0.6,num_perm=50)
@@ -348,14 +352,14 @@ def train_classifier():
         f13=avg_usernames_all_tweets(all_tweets)
         return [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13]
 
-def gen_stream():
-    """Generates stream of tweets"""
-    with gzip.open('tweets.json.gz') as f:
-        for line in f:
-            try:
-                yield json.loads(line.decode('utf-8'))
-            except:
-                continue
+
+def gen_stream(fin=None):
+    """Generates stream of tweets.
+    using the Twitter public sample stream.
+    """
+    stream  = twitter.STREAMING_API(key=1, payload={})
+    for tweet in stream.run():
+        yield tweet
 
 
 def pipeline():
@@ -363,8 +367,7 @@ def pipeline():
     for tweet in gen_stream():
         tweet_id=tweet['id']
         tweet_text=tweet['text'].translate(non_bmp_map)
-        true_value=is_signal_tweet(tweet_text)
-        if true_value==True:
+        if is_signal_tweet(tweet_text):
             signal_tweets.append(tweet)
             signal_id_text.update({tweet_id:tweet_text})
             minhash(tweet_text,tweet_id,signal_minhashes,lsh_signal)
@@ -372,7 +375,7 @@ def pipeline():
             non_signal_tweets.append(tweet)
             non_signal_id_text.update({tweet_id:tweet_text})
             minhash(tweet_text,tweet_id,non_signal_minhashes,lsh_non_signal)
-    for key,value in signal_minhashes.items():  
+    for key,value in signal_minhashes.items():
         graph=generate_undirected_graph(key,value)
     conn_comp=connected_components(graph)
     for each_cluster in conn_comp:
@@ -381,7 +384,7 @@ def pipeline():
             for k,v in signal_id_text.items():
                 if each_id==k:
                     sig_tweets.append(v)
-                    
+
         non_sig_tweets=[]
         sent=extract_summary(sig_tweets)
         sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
@@ -389,13 +392,11 @@ def pipeline():
             for k,v in non_signal_id_text:
                 if each==k:
                     non_sig_tweets.append(v)
-                    
+
         tot_tweets=sig_tweets+non_sig_tweets
         features=gen_statistical_features(tot_tweets,sig_tweets)
         #each|=set(sim_non_signal_tweets)
-        
-    
-    
+
 
 if __name__ == '__main__':
     pipeline()
