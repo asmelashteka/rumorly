@@ -1,1 +1,1 @@
-from .rumourly import *
+from .rumorly import *
