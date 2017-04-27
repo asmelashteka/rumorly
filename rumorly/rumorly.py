@@ -184,31 +184,31 @@ def pipeline():
         tweet_id=str(each_tweet[1])
         tweet_text=each_tweet[0]
         try:
-			if is_signal_tweet(tweet_text):
-				signal_id_text.update({tweet_id:tweet_text})
-               	m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
-               	gen_undirected_graph(tweet_id,m)
-            else:
-               	minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
-               	non_signal_id_text.update({tweet_id:tweet_text})                
-        except ValueError:
-            pass
-        rumor_ids=connected_components(g)
-        for each_cluster in rumor_ids:
-        sig_tweets=[]
-        non_sig_tweets=[]
-        for each_id in each_cluster:
-            for k,v in signal_id_text.items():
-                if each_id==k:
-                    sig_tweets.append(v)
-        sent=extract_summary(sig_tweets)
-        sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
-        for each in sim_non_signal_tweets:
-            for k,v in non_signal_id_text:
-                if each==k:
-                    non_sig_tweets.append(v)
-        tot_tweets=sig_tweets+non_sig_tweets
-        
+	if is_signal_tweet(tweet_text):
+		signal_id_text.update({tweet_id:tweet_text})
+        m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
+        gen_undirected_graph(tweet_id,m)
+    else:
+		minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
+		non_signal_id_text.update({tweet_id:tweet_text})                
+    except ValueError:
+        pass
+	rumor_ids=connected_components(g)
+	for each_cluster in rumor_ids:
+	sig_tweets=[]
+	non_sig_tweets=[]
+	for each_id in each_cluster:
+		for k,v in signal_id_text.items():
+			if each_id==k:
+				sig_tweets.append(v)
+	sent=extract_summary(sig_tweets)
+	sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
+	for each in sim_non_signal_tweets:
+		for k,v in non_signal_id_text:
+			if each==k:
+				non_sig_tweets.append(v)
+	tot_tweets=sig_tweets+non_sig_tweets
+
     
         
 
