@@ -7,6 +7,7 @@ http://dl.acm.org/citation.cfm?id=2741637
 """
 
 import sys
+import time
 import re
 import json
 import gzip
@@ -72,7 +73,7 @@ def minhash(tweet_text,tweet_id,lsh_index,minhashes_dict):
     for d in trigrams:
         m.update(d.encode('UTF-8'))
     minhashes_dict.update({tweet_id:m})
-    lsh_index.insert("tweet_id",m)
+    lsh_index.insert(tweet_id,m)
     return m
 
 def generate_undirected_graph(tweet_id,min_hash):
@@ -164,9 +165,23 @@ def assign_cluster_to_non_signal_tweets(sentence):
     similar_nonsignal_tweets=lsh_non_signal.query(m)
     return similar_nonsignal_tweets
 
+
+def filter_out(tweet):
+    '''
+    checks if tweet should be filtered out
+
+    exmaple filters: language, deleted tweets, number of words
+    '''
+    if tweet['lang'] != ('en', 'en-gb'): return True
+    if 'delete' in tweet: return True
+    if tweet['text'].split() < 3: return True
+
+
 def gen_stream(fin=None):
+    #TODO:consumer producer with queue
     stream  = twitter.STREAMING_API(key=1, payload={})
     for tweet in stream.run():
+        if filter_out(tweet): continue
         yield tweet
 
 
@@ -174,29 +189,33 @@ def pipeline():
     for tweet in gen_stream():
         tweet_id=tweet.get('id')
         tweet_text=tweet.get('text')
-    ## if is_signal_tweet(tweet_text):
-    ##     signal_id_text.update({tweet_id:tweet_text})
-    ##     m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
-    ##     gen_undirected_graph(tweet_id,m)
-    ## else:
-    ##     minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
-    ##     non_signal_id_text.update({tweet_id:tweet_text})
+        print(tweet_id, tweet_text)
+        if is_signal_tweet(tweet_text):
+            print('signal\t{}\t{}'.format(tweet_id, tweet_text))
+            signal_id_text.update({tweet_id:tweet_text})
+            m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
+            gen_undirected_graph(tweet_id,m)
+        else:
+            print('non-signal\t{}\t{}'.format(tweet_id, tweet_text))
+            minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
+            non_signal_id_text.update({tweet_id:tweet_text})
 
-    ## rumor_ids=connected_components(g)
-    ## for each_cluster in rumor_ids:
-    ## sig_tweets=[]
-    ## non_sig_tweets=[]
-    ## for each_id in each_cluster:
-    ##     for k,v in signal_id_text.items():
-    ##         if each_id==k:
-    ##             sig_tweets.append(v)
-    ## sent=extract_summary(sig_tweets)
-    ## sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
-    ## for each in sim_non_signal_tweets:
-    ##     for k,v in non_signal_id_text:
-    ##         if each==k:
-    ##             non_sig_tweets.append(v)
-    ## tot_tweets=sig_tweets+non_sig_tweets
+    rumor_ids=connected_components(g)
+    for each_cluster in rumor_ids:
+        sig_tweets=[]
+        non_sig_tweets=[]
+        for each_id in each_cluster:
+            for k,v in signal_id_text.items():
+                if each_id==k:
+                    sig_tweets.append(v)
+
+    sent=extract_summary(sig_tweets)
+    sim_non_sig_tweets=non_signal_tweets_to_cluster(sent)
+    for each in sim_non_signal_tweets:
+        for k,v in non_signal_id_text:
+            if each==k:
+                non_sig_tweets.append(v)
+    tot_tweets=sig_tweets+non_sig_tweets
 
 
 if __name__ == '__main__':
