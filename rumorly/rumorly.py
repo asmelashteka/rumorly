@@ -65,8 +65,8 @@ def minhash(tweet_text,tweet_id,lsh_index,minhashes_dict):
 	 Returns:
 	 Minhash value of the tweettext and appends it to the lsh index and minhashes dictionary.
 	 """
-
-    words = tweet_text.split(" ")
+		
+	words = tweet_text.split(" ")
     trigrams=[]
     for i in range(len(words)-2):
         trigrams.append(words[i]+words[i+1]+words[i+2])
@@ -115,7 +115,7 @@ def connected_components(g):
     conn_comp=sorted(nx.connected_components(g),key=len,reverse=True)
     req_conn_comp=[]
     for each_cluster in conn_comp:
-        if (len(each_cluster)>3):
+    	if (len(each_cluster)>3):
             req_conn_comp.append(each_cluster)
         else:
             pass
@@ -184,13 +184,13 @@ def pipeline():
         tweet_id=str(each_tweet[1])
         tweet_text=each_tweet[0]
         try:
-            if is_signal_tweet(tweet_text):
-                signal_id_text.update({tweet_id:tweet_text})
-                m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
-                gen_undirected_graph(tweet_id,m)
+			if is_signal_tweet(tweet_text):
+				signal_id_text.update({tweet_id:tweet_text})
+               	m=minhash(tweet_text,tweet_id,lsh_signal,signal_minhashes)
+               	gen_undirected_graph(tweet_id,m)
             else:
-                minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
-                non_signal_id_text.update({tweet_id:tweet_text})                
+               	minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_minhashes)
+               	non_signal_id_text.update({tweet_id:tweet_text})                
         except ValueError:
             pass
         rumor_ids=connected_components(g)
