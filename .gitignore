@@ -1,2 +1,3 @@
 rumorly/credentials*
 venv*
+.env

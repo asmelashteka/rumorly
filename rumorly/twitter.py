@@ -9,7 +9,7 @@ from threading import Thread
 import requests
 from requests_oauthlib import OAuth1
 
-from .credentials import get_keys
+from credentials import get_keys
 
 _sentinel = object()
 
