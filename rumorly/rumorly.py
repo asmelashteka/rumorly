@@ -34,7 +34,7 @@ non_signal_id_text={}
 signal_minhashes={}
 non_signal_minhashes={}
 
-reg_ex=re.compile(r"(is\s?(that\s?|this\s?|it\s?)true\s?[?]?)|\breal\b|reall[y?]*|unconfirmed|\brumor\b|debunk|(this\s?|that\s?|it\s?)is\s?not\s?true|\bwha[t?!]+\b")
+reg_ex=re.compile(r"(\bis\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\b|reall[y?]*|unconfirmed|\brumor\b|debunk|(this\s*|that\s*|it\s*)is\s?not\s*true|\bwha[t?!]+\b",re.IGNORECASE)
 
 def is_signal_tweet(tweet_text):
 	"""
