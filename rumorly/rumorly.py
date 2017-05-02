@@ -52,6 +52,7 @@ def is_signal_tweet(tweet_text):
 
 	if reg_ex.search(tweet_text):
 		return True
+
 def minhash(tweet_text,tweet_id,lsh_index,id_text_dict):
 	"""
 	Generate a minhash from tweet_text and appends it to dictionary with text as key and appends to lsh index
