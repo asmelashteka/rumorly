@@ -20,7 +20,6 @@ from datasketch import MinHash, MinHashLSH
 import networkx as nx
 import twitter
 from twitter import STREAMING_API
-#from training import train_classifier
 
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
@@ -52,6 +51,8 @@ def is_signal_tweet(tweet_text):
 
 	if reg_ex.search(tweet_text):
 		return True
+	else:
+		return False
 
 def minhash(tweet_text,tweet_id,lsh_index,id_text_dict):
 	"""
