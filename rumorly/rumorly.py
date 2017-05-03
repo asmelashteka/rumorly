@@ -13,14 +13,23 @@ import json
 import gzip
 from collections import Counter
 import random
+import threading
 from random import randint
+from queue import Queue
+
 import matplotlib.pyplot as plt
 import numpy as np
 from datasketch import MinHash, MinHashLSH
 import networkx as nx
-import twitter
-from twitter import STREAMING_API
 
+from . import twitter
+from .twitter import STREAMING_API
+
+
+# collection of tweets
+TWEETS = Queue()
+# special signal to mark next window
+_sentinel = object()
 
 non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
 lsh_signal=MinHashLSH(threshold=0.6, num_perm=50)
@@ -33,7 +42,31 @@ non_signal_id_text={}
 signal_minhashes={}
 non_signal_minhashes={}
 
-reg_ex=re.compile(r"(\bis\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\b|reall[y?]*|unconfirmed|\brumor\b|debunk|(this\s*|that\s*|it\s*)is\s?not\s*true|\bwha[t?!]+\b",re.IGNORECASE)
+
+def gen_dstreams(window=20):
+    '''generates discrete tweet streams.
+    simulates this by adding a sentinel at every window
+    #TODO: timed _sentinel insertion
+
+    @param window in seconds
+    '''
+    start_time = time.time()
+    stream = twitter.STREAMING_API(key=1, payload={})
+    for tweet in stream.run():
+        tweets.put(tweet)
+        if int(time.time() - start_time) % window == 0:
+            tweets.put(_sentinel)
+            time.sleep(1)
+
+
+def start_twitter_stream():
+    '''launches Twitter stream'''
+    t = threading.Thread(target=gen_dstreams)
+    t.deamon = True
+    t.start()
+
+
+eg_ex=re.compile(r"(\bis\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\b|reall[y?]*|unconfirmed|\brumor\b|debunk|(this\s*|that\s*|it\s*)is\s?not\s*true|\bwha[t?!]+\b",re.IGNORECASE)
 
 def is_signal_tweet(tweet_text):
 	"""
@@ -196,6 +229,31 @@ def pipeline():
 			sig_tweet_texts.append(signal_id_text[each_id])
 		sentence=extract_summary(sig_tweet_texts)
 		sim_non_sig_tweets=match_non_signal_tweets(sentence)
+
+
+
+def pipeline2():
+    while True:
+        while True:
+            tweet = tweets.get()
+            if tweet is _sentinel: break
+		    tweet_id=tweet.get('id')
+         	tweet_text=tweet.get('text')
+	    	if(is_signal_tweet(tweet_text)):
+	    		m=minhash(tweet_text,tweet_id,lsh_signal,signal_id_text)
+	    		gen_undirected_graph(tweet_id,m)
+	    	else:
+		    	minhash(tweet_text,tweet_id,lsh_non_signal,non_signal_id_text)
+        print('clustering for {} tweets'.format(tweet_count))
+	    rumor_ids=connected_components(g)
+	    for each_cluster in rumor_ids:
+	    	sig_tweet_texts=[]
+	    	sig_tweets_clus=[]
+	    	non_signal_tweets_clus=[]
+	    	for each_id in each_cluster:
+	    		sig_tweet_texts.append(signal_id_text[each_id])
+	    	sentence=extract_summary(sig_tweet_texts)
+	    	sim_non_sig_tweets=match_non_signal_tweets(sentence)
 
 
 if __name__ == '__main__':
