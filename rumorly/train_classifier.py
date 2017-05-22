@@ -21,7 +21,7 @@ def is_signal_tweet(tweet_text):
     else:
         return False
 
-with open("randnr/all_rumors.txt") as f:
+with open("all_rumors.txt") as f:
     for each in json.load(f):
         if is_signal_tweet(each['text']):
             sig_tweets_rumor.append(each)
@@ -30,7 +30,7 @@ with open("randnr/all_rumors.txt") as f:
 rumor_features=gen_statistical_features(all_tweets_rumor,sig_tweets_rumor)
 
 
-with open("randnr/all_non_rumors.txt") as f:
+with open("all_non_rumors.txt") as f:
     for each in json.load(f):
         if is_signal_tweet(each['text']):
             sig_tweets_non_rumor.append(each)
