@@ -107,6 +107,8 @@ def pipeline():
                 non_signal_tweets.append(tweet)
         lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig=create_lsh(signal_id_texts,no_of_perm,thr)
         clusters=create_clusters(lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig,thr)
+        rank_dict={}
+        i=1
         for keys,values in clusters.items():
             sig_tweet_texts=[]
             sig_tweets_cluster=[]
@@ -116,7 +118,6 @@ def pipeline():
                     if tweet['id']==each:
                         sig_tweets_cluster.append(tweet)
             sent=extract_summary(sig_tweet_texts)
-            print(sent)
             non_sig_tweets_cluster=[]
             non_signal_id_texts.update({'11111111':sent})
             lsh_dict_nonsig,doc_to_lsh_nonsig,hashcorp_nonsig=create_lsh(non_signal_id_texts,no_of_perm,thr)
@@ -126,21 +127,21 @@ def pipeline():
                     if tweet['id']==each_id:
                         non_sig_tweets_cluster.append(tweet)
             all_tweets=sig_tweets_cluster+non_sig_tweets_cluster
+            rank_dict.update({len(all_tweets):sent})
             features=gen_statistical_features(all_tweets,sig_tweets_cluster)
             decision=classify(features)
+            print("Classification using SVM","\n")
             if 0 in decision:
-                print("Probably Non-Rumor")
+                print("Probably Non-Rumor :",sent)
             else:
-                print("Probably Rumor")
-            
+                print("Probably Rumor :",sent)
+        sort=(x for x in sorted(rank_dict.keys(),reverse=True))
+        print("Popularity Method")
+        for each in sort:
+            print(i,":",each,rank_dict[each])
+            i=i+1
 if __name__ == '__main__':
 	pipeline()
-
-
-
-
-
-
 
 
 
