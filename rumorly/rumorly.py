@@ -91,11 +91,21 @@ def start_twitter_stream():
 
 
 def pipeline():
+    i=1
     start_twitter_stream()
     while True:
+        signal_tweets=[]
+        non_signal_tweets=[]
+        signal_id_texts={}
+        non_signal_id_texts={}
+        tweet_count=0
+        svm_rank={}
+        print("cycle{}".format(i))
+        i=i+1
         while True:
             tweet = TWEETS.get()
-            if tweet is _sentinel: 
+            tweet_count=tweet_count+1
+            if tweet is _sentinel:
                 break
             tweet_id=tweet.get('id')
             tweet_text=tweet.get('text')
@@ -105,10 +115,11 @@ def pipeline():
             else:
                 non_signal_id_texts.update({tweet_id:tweet_text})
                 non_signal_tweets.append(tweet)
+        print("clustering for {} tweets".format(tweet_count))
         lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig=create_lsh(signal_id_texts,no_of_perm,thr)
         clusters=create_clusters(lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig,thr)
-        rank_dict={}
-        i=1
+        svm_rank={}
+        decision_rank={}
         for keys,values in clusters.items():
             sig_tweet_texts=[]
             sig_tweets_cluster=[]
@@ -127,21 +138,26 @@ def pipeline():
                     if tweet['id']==each_id:
                         non_sig_tweets_cluster.append(tweet)
             all_tweets=sig_tweets_cluster+non_sig_tweets_cluster
-            rank_dict.update({len(all_tweets):sent})
             features=gen_statistical_features(all_tweets,sig_tweets_cluster)
-            decision=classify(features)
-            print("Classification using SVM","\n")
-            if 0 in decision:
-                print("Probably Non-Rumor :",sent)
-            else:
-                print("Probably Rumor :",sent)
-        sort=(x for x in sorted(rank_dict.keys(),reverse=True))
-        print("Popularity Method")
-        for each in sort:
-            print(i,":",each,rank_dict[each])
-            i=i+1
+            svm_decision=svm_classify(features)
+            tree_decision=decision_classify(features)
+            svm_rank.update({sent:svm_decision[0][0]})
+            decision_rank.update({sent:tree_decision[0][0]})
+        svm_rank=(sorted(svm_rank,key=svm_rank.get,reverse=True))
+        decision_rank=(sorted(decision_rank,key=decision_rank,reverse=True))
+        a=1
+        b=1
+        print("Ranking Using SVM")
+        for each in svm_rank:
+            print("rank {}".format(a),each)
+            a=a+1
+            print("\n")
+        print("ranking Using Decision Tree")
+        for each in decision_rank:
+            print("rank {}".format(a),each)
+            b=b+1
+            print("\n")
+
+
 if __name__ == '__main__':
 	pipeline()
-
-
-
