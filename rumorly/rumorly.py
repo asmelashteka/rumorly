@@ -144,7 +144,7 @@ def pipeline():
             svm_rank.update({sent:svm_decision[0][0]})
             decision_rank.update({sent:tree_decision[0][0]})
         svm_rank=(sorted(svm_rank,key=svm_rank.get,reverse=True))
-        decision_rank=(sorted(decision_rank,key=decision_rank,reverse=True))
+        decision_rank=(sorted(decision_rank,key=decision_rank.get,reverse=True))
         a=1
         b=1
         print("Ranking Using SVM")
