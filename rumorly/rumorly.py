@@ -18,8 +18,7 @@ from create_lsh import create_lsh,create_clusters,near_duplicates
 from gen_features import gen_statistical_features
 from train_classifier import classify
 
-reg_ex=re.compile(r"(\bis\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\b|reall[y?]*|unconfirmed|\brumor\b|debunk|(this\s*|that\s*|it\s*)is\s?not\s*true|\bwha[t?!]+\b",re.IGNORECASE)
-
+reg_ex=re.compile(r"(is\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\s*[?]|\breally\s*[?]+|\bunconfirmed|\brumor|\bdebunk|(this\s*|that\s*|it\s*)is\s?not\s*true|wha*t[?!][?1]*",re.IGNORECASE)
 thr=0.6
 no_of_perm=100
 signal_tweets=[]
