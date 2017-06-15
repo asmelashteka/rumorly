@@ -98,7 +98,6 @@ def pipeline():
         signal_id_texts={}
         non_signal_id_texts={}
         tweet_count=0
-        svm_rank={}
         print("cycle{}".format(i))
         i=i+1
         while True:
