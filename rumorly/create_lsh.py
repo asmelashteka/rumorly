@@ -114,5 +114,3 @@ def create_clusters(lsh_dict,doc_to_lsh,hashcorp,thr):
         if len(values)>3:
             final_clusters.update({keys:values})
     return final_clusters
-
-
