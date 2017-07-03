@@ -47,11 +47,11 @@ def is_signal_tweet(tweet_text):
     else:
         return False
 
-def extract_summary(list_signal_tweets):
+def extract_summary(list_signal_tweet_texts):
     """
     For each cluster extracts statement that summarizes the tweets in a signal cluster
     Args:
-    param: Set of tweet ids
+    param: Set of tweet texts
     Returns:
     Most frequent and continuous substrings (3grams that
     appear in more than 80% of the tweets) in order.
