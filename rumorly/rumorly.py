@@ -19,6 +19,7 @@ from gen_features import gen_statistical_features
 from train_classifier import classify
 
 reg_ex=re.compile(r"(is\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\s*[?]|\breally\s*[?]+|\bunconfirmed|\brumor|\bdebunk|(this\s*|that\s*|it\s*)is\s?not\s*true|wha*t[?!][?1]*",re.IGNORECASE)
+
 thr=0.6
 no_of_perm=100
 signal_tweets=[]
@@ -32,6 +33,15 @@ TWEETS = Queue()
 _sentinel = object()
 
 def is_signal_tweet(tweet_text):
+    """
+    Search for presence of signal pattern in the tweet_text
+    Args:
+    Param: tweet_text
+    Returns:
+    True if signal pattern is found, False otherwise
+    
+    """
+
     if reg_ex.search(tweet_text):
         return True
     else:
@@ -42,7 +52,6 @@ def extract_summary(list_signal_tweets):
     For each cluster extracts statement that summarizes the tweets in a signal cluster
     Args:
     param: Set of tweet ids
-
     Returns:
     Most frequent and continuous substrings (3grams that
     appear in more than 80% of the tweets) in order.
@@ -69,7 +78,6 @@ def gen_dstreams(window=600):
     '''generates discrete tweet streams.
     simulates this by adding a sentinel at every window
     #TODO: timed _sentinel insertion
-
     @param window in seconds
     '''
     start_time = time.time()
@@ -93,11 +101,20 @@ def pipeline():
     i=1
     start_twitter_stream()
     while True:
+        """
+        for each cycle we initialize 
+        1)Lists: signal_tweets and non_signal_tweets which contain the whole tweets, useful for calculating the features of tweets in ranking phase
+        
+        2)Dictionaries:signal_id_texts and non_signal_id_texts, where the dictionary contains only the (id, tweet_text) as key-value pairs  and these are inputs for
+        "create_lsh" function that outputs the clusters of similar tweets
+        
+        """
         signal_tweets=[]
         non_signal_tweets=[]
         signal_id_texts={}
         non_signal_id_texts={}
-        tweet_count=0
+        svm_rank={}
+        decision_rank={}
         print("cycle{}".format(i))
         i=i+1
         while True:
@@ -113,24 +130,33 @@ def pipeline():
             else:
                 non_signal_id_texts.update({tweet_id:tweet_text})
                 non_signal_tweets.append(tweet)
-        print("clustering for {} tweets".format(tweet_count))
         lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig=create_lsh(signal_id_texts,no_of_perm,thr)
         clusters=create_clusters(lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig,thr)
-        svm_rank={}
-        decision_rank={}
+
+        """the ouput at this stage is a dictionary where the keys are cluster numbers and each value is set of tweets_id's that are similar(one set of cluster of tweets)"""
+
         for keys,values in clusters.items():
             sig_tweet_texts=[]
             sig_tweets_cluster=[]
+            non_sig_tweets_cluster=[]
+            """ 
+            for each tweet_id in the set, 
+            1) from the id_text dictionary, find the tweet_text that corresponds to the tweet_id .
+            2) from list of signal tweets in this cycle, find the tweet that corresponds to the tweet_id 
+            """
             for each in values:
                 sig_tweet_texts.append(signal_id_texts[each])
                 for tweet in signal_tweets:
                     if tweet['id']==each:
                         sig_tweets_cluster.append(tweet)
             sent=extract_summary(sig_tweet_texts)
-            non_sig_tweets_cluster=[]
+            """ Using the extracted statement, find the non_signal tweets that match the statement"""
             non_signal_id_texts.update({'11111111':sent})
             lsh_dict_nonsig,doc_to_lsh_nonsig,hashcorp_nonsig=create_lsh(non_signal_id_texts,no_of_perm,thr)
             non_sig_tweets=near_duplicates('11111111',lsh_dict_nonsig,doc_to_lsh_nonsig,thr)
+            """ the output at this stage is set of non_signal tweet_ids that match the statement"""
+
+            """from list of non_signal tweets in this cycle, find the tweets that correspond to tweet_id """
             for each_id in non_sig_tweets:
                 for tweet in non_signal_tweets:
                     if tweet['id']==each_id:
