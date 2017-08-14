@@ -16,7 +16,7 @@ import twitter
 from twitter import STREAMING_API
 from create_lsh import create_lsh,create_clusters,near_duplicates
 from gen_features import gen_statistical_features
-from train_classifier import classify
+from train_classifier import svm_classify,decision_classify
 
 reg_ex=re.compile(r"(is\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\s*[?]|\breally\s*[?]+|\bunconfirmed|\brumor|\bdebunk|(this\s*|that\s*|it\s*)is\s?not\s*true|wha*t[?!][?1]*",re.IGNORECASE)
 
@@ -57,11 +57,11 @@ def extract_summary(list_signal_tweet_texts):
     appear in more than 80% of the tweets) in order.
     """
 
-    no_of_tweets=len(list_signal_tweets)
+    no_of_tweets=len(list_signal_tweet_texts)
     req_cutoff=0.8*no_of_tweets
     words_list=set()
     shinglesincluster =[]
-    for each_tweet in list_signal_tweets:
+    for each_tweet in list_signal_tweet_texts:
         words = each_tweet.split(" ")
         for index in range(0, len(words) - 2):
             shingle = words[index] + " " + words[index + 1] + " " + words[index + 2]
@@ -74,7 +74,7 @@ def extract_summary(list_signal_tweet_texts):
     return sentence
 
 
-def gen_dstreams(window=600):
+def gen_dstreams(window=1800):
     '''generates discrete tweet streams.
     simulates this by adding a sentinel at every window
     #TODO: timed _sentinel insertion
@@ -114,12 +114,11 @@ def pipeline():
         signal_id_texts={}
         non_signal_id_texts={}
         svm_rank={}
-        decision_rank={}
+        dec_rank={}
         print("cycle{}".format(i))
         i=i+1
         while True:
             tweet = TWEETS.get()
-            tweet_count=tweet_count+1
             if tweet is _sentinel:
                 break
             tweet_id=tweet.get('id')
@@ -132,31 +131,31 @@ def pipeline():
                 non_signal_tweets.append(tweet)
         lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig=create_lsh(signal_id_texts,no_of_perm,thr)
         clusters=create_clusters(lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig,thr)
+        print(len(clusters))
 
         """the ouput at this stage is a dictionary where the keys are cluster numbers and each value is set of tweets_id's that are similar(one set of cluster of tweets)"""
-
+        sig_tweet_texts=[]
+        sig_tweets_cluster=[]
+        non_sig_tweets_cluster=[]
+        """ 
+        for each tweet_id in the set, 
+        1) from the id_text dictionary, find the tweet_text that corresponds to the tweet_id .
+        2) from list of signal tweets in this cycle, find the tweet that corresponds to the tweet_id 
+        """
         for keys,values in clusters.items():
             sig_tweet_texts=[]
             sig_tweets_cluster=[]
-            non_sig_tweets_cluster=[]
-            """ 
-            for each tweet_id in the set, 
-            1) from the id_text dictionary, find the tweet_text that corresponds to the tweet_id .
-            2) from list of signal tweets in this cycle, find the tweet that corresponds to the tweet_id 
-            """
             for each in values:
                 sig_tweet_texts.append(signal_id_texts[each])
                 for tweet in signal_tweets:
                     if tweet['id']==each:
                         sig_tweets_cluster.append(tweet)
             sent=extract_summary(sig_tweet_texts)
-            """ Using the extracted statement, find the non_signal tweets that match the statement"""
+            print(sent)
+            non_sig_tweets_cluster=[]
             non_signal_id_texts.update({'11111111':sent})
             lsh_dict_nonsig,doc_to_lsh_nonsig,hashcorp_nonsig=create_lsh(non_signal_id_texts,no_of_perm,thr)
             non_sig_tweets=near_duplicates('11111111',lsh_dict_nonsig,doc_to_lsh_nonsig,thr)
-            """ the output at this stage is set of non_signal tweet_ids that match the statement"""
-
-            """from list of non_signal tweets in this cycle, find the tweets that correspond to tweet_id """
             for each_id in non_sig_tweets:
                 for tweet in non_signal_tweets:
                     if tweet['id']==each_id:
@@ -164,11 +163,11 @@ def pipeline():
             all_tweets=sig_tweets_cluster+non_sig_tweets_cluster
             features=gen_statistical_features(all_tweets,sig_tweets_cluster)
             svm_decision=svm_classify(features)
-            tree_decision=decision_classify(features)
             svm_rank.update({sent:svm_decision[0][0]})
-            decision_rank.update({sent:tree_decision[0][0]})
+            tree_decision=decision_classify(features)
+            dec_rank.update({sent:tree_decision[0][0]})
         svm_rank=(sorted(svm_rank,key=svm_rank.get,reverse=True))
-        decision_rank=(sorted(decision_rank,key=decision_rank.get,reverse=True))
+        dec_rank=(sorted(dec_rank,key=dec_rank.get,reverse=True))
         a=1
         b=1
         print("Ranking Using SVM")
@@ -177,10 +176,11 @@ def pipeline():
             a=a+1
             print("\n")
         print("ranking Using Decision Tree")
-        for each in decision_rank:
+        for each in dec_rank:
             print("rank {}".format(a),each)
             b=b+1
             print("\n")
+
 
 
 if __name__ == '__main__':
