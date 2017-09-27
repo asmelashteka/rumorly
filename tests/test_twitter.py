@@ -21,7 +21,7 @@ def test_sample_stream():
 
 
 def test_filter_stream():
-    stream  = twitter.STREAMING_API(key=1, payload={'hashtags':'rt'}, end_point='sample')
+    stream  = twitter.STREAMING_API(key=1, payload={'hashtags':'rt'}, end_point='filter')
     tweets = []
     for idx, tweet in enumerate(stream.run()):
         print(tweet)
