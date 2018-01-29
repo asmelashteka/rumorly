@@ -9,6 +9,13 @@ import sys
 
 
 def gen_statistical_features(all_tweets,signal_tweets):
+    """
+    Generates Statistical features from tweets
+    
+    Input: Labelled Tweets
+    
+    Output: Feature Vector
+    """
     
     def ratio_signal_all(all_tweets,signal_tweets):
         a=len(signal_tweets)
