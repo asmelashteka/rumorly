@@ -20,15 +20,6 @@ from train_classifier import svm_classify,decision_classify
 
 reg_ex=re.compile(r"(is\s*(that\s*|this\s*|it\s*)true\s?[?]*)|\breal\s*[?]|\breally\s*[?]+|\bunconfirmed|\brumor|\bdebunk|(this\s*|that\s*|it\s*)is\s?not\s*true|wha*t[?!][?1]*|\bfake\s*news",re.IGNORECASE)
 
-
-thr=0.6
-no_of_perm=100
-signal_tweets=[]
-non_signal_tweets=[]
-signal_id_texts={}
-non_signal_id_texts={}
-
-
 TWEETS = Queue()
 # special signal to mark next window
 _sentinel = object()
@@ -74,36 +65,32 @@ def extract_summary(list_signal_tweet_texts):
 	sentence= ' '.join(words_list)
 	return sentence
 
+def gen_stream():
+	with open("filename") as f:
+		for each in f:
+			yield json.loads(each)
 
-def gen_dstreams(window=600):
+def gen_dstreams(time_window):
 	'''generates discrete tweet streams.
 	simulates this by adding a sentinel at every window
 	#TODO: timed _sentinel insertion
 	@param window in seconds
 	'''
-	start_time = time.time()
-	stream =twitter.STREAMING_API(key=1, payload={'hashtags':'TuesdayThoughts'},end_point='filter')
-	for tweet in stream.run():
-		tweet_lang=tweet.get('lang')
-		if tweet_lang in ('en','en-gb'):
-			TWEETS.put(tweet)
-		if int(time.time() - start_time) % window == 0:
+	start_time = datetime.datetime.strptime('starttime of the tweet(ex time.now()', '%a %b %d %H:%M:%S +0000 %Y')
+	count=0
+	for tweet in gen_stream():
+		TWEETS.put(tweet)
+		times=tweet.get("created_at")
+		tweet_time=datetime.datetime.strptime(times, '%a %b %d %H:%M:%S +0000 %Y')
+		if ((tweet_time-start_time).total_seconds())>time_window:
 			TWEETS.put(_sentinel)
-			time.sleep(1)
+			start_time=datetime.datetime.strptime(times, '%a %b %d %H:%M:%S +0000 %Y')
 
-def start_twitter_stream():
-	'''launches Twitter stream'''
-	t = threading.Thread(target=gen_dstreams)
-	t.deamon = True
-	t.start()
 
 
 def pipeline():
-	i=1
-	start_twitter_stream()
+	gen_dstreams()
 	while True:
-		print("cycle{}".format(i))
-		i=i+1
 		signal_tweets=[]
 		non_signal_tweets=[]
 		signal_id_texts={}
@@ -117,7 +104,6 @@ def pipeline():
 			tweet_id=tweet.get('id')
 			tweet_text=tweet.get('text')
 			if(is_signal_tweet(tweet_text)):
-				print(tweet_text)
 				signal_id_texts.update({tweet_id:tweet_text})
 				signal_tweets.append(tweet)
 			else:
@@ -125,7 +111,6 @@ def pipeline():
 				non_signal_tweets.append(tweet)
 		lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig=create_lsh(signal_id_texts,no_of_perm,thr)
 		clusters=create_clusters(lsh_dict_sig,doc_to_lsh_sig,hashcorp_sig,thr)
-		print("no of rumor clusters are {}".format(len(clusters)))
 		for keys,values in clusters.items():
 			sig_tweet_texts=[]
 			sig_tweets_cluster=[]
@@ -145,26 +130,24 @@ def pipeline():
 				for tweet in non_signal_tweets:
 					if tweet['id']==each_id:
 						non_sig_tweets_cluster.append(tweet)
-			print(values)
-			print(non_sig_tweets)
 			all_tweets=sig_tweets_cluster+non_sig_tweets_cluster
 			features=gen_statistical_features(all_tweets,sig_tweets_cluster)
 			svm_decision=svm_classify(features)
 			svm_rank.update({sent:svm_decision[0][0]})
 			tree_decision=decision_classify(features)
 			dec_rank.update({sent:tree_decision[0][0]})
-		svm_rank=(sorted(svm_rank,key=svm_rank.get,reverse=True))
-		dec_rank=(sorted(dec_rank,key=dec_rank.get,reverse=True))
+		ranked_svm=(sorted(svm_rank,key=svm_rank.get,reverse=True))
+		ranked_dec=(sorted(dec_rank,key=dec_rank.get,reverse=True))
 		a=1
 		b=1
 		print("Ranking Using SVM")
-		for each in svm_rank:
+		for each in ranked_svm:
 			print("rank {}".format(a),each)
 			a=a+1
 			print("\n")
 		print("ranking Using Decision Tree")
-		for each in dec_rank:
-			print("rank {}".format(a),each)
+		for each in reanked_dec:
+			print("rank {}".format(b),each)
 			b=b+1
 			print("\n")
 
