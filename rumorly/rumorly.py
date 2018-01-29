@@ -92,7 +92,7 @@ def gen_dstreams(time_window):
 
 
 def pipeline():
-	gen_dstreams()
+	gen_dstreams(time_window)
 	while True:
 		signal_tweets=[]
 		non_signal_tweets=[]
