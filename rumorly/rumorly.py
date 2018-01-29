@@ -66,17 +66,20 @@ def extract_summary(list_signal_tweet_texts):
 	return sentence
 
 def gen_stream():
+	"""
+	opens a file to generate a stream of tweets
+	"""
 	with open("filename") as f:
 		for each in f:
 			yield json.loads(each)
 
 def gen_dstreams(time_window):
-	'''generates discrete tweet streams.
+	"""generates discrete tweet streams.
 	simulates this by adding a sentinel at every window
 	#TODO: timed _sentinel insertion
 	@param window in seconds
-	'''
-	start_time = datetime.datetime.strptime('starttime of the tweet(ex time.now()', '%a %b %d %H:%M:%S +0000 %Y')
+	"""
+	start_time = datetime.datetime.strptime('starttime of the tweet(example:time.now()', '%a %b %d %H:%M:%S +0000 %Y')
 	count=0
 	for tweet in gen_stream():
 		TWEETS.put(tweet)
