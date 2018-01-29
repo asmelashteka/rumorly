@@ -12,6 +12,16 @@ from random import sample,choice
 from sklearn import metrics
 
 def create_lsh(id_text_dict,no_of_perm,thr):
+    """ Generates clusters of tweets
+    Param1: {tweet_id:tweet_text} dictionary
+    Param2: No of permutations for hashing
+    Param3: Threshold for similarity
+    Output:
+    lsh_dict: A dictionary, where the keys are bucket numbers and the values are list of tweet_ids of similar tweet texts
+    doc_to_lsh: A dictionary, where the keys are tweet ids and the values are list of bucket numbers to which the tweet belongs.
+    Hashcorp: A dictionary, where the keys are tweet ids and the values are array of randomly permuted hashvalues
+    """
+    
     M_PRIME = (1 << 89) - 1
     MAX_HASH = (1 << 64) - 1
     random.seed(427)
@@ -65,6 +75,9 @@ def create_lsh(id_text_dict,no_of_perm,thr):
 
 
 def jaccard(h1,h2):
+    """
+    Computes the jaccard Similarity 
+    """
     return np.float(np.count_nonzero(h1==h2)) /np.float(h2.size)
 
 def connected(seed,lshdict,doc2lsh,t):
@@ -96,6 +109,16 @@ def near_duplicates(seed,lshdict,doc2lsh,t):
     return cluster
 
 def create_clusters(lsh_dict,doc_to_lsh,hashcorp,thr):
+    """ Generate cluster of tweets
+    
+   Param1: LSH dictionary
+   Param2: Doc to LSH dictionary
+   Param3: Hashcorp
+   Param4: Threshold
+   
+   Output:
+   A dictionary, where the keys are cluster numbers and values are tweet ids of similar tweet texts based on threshold
+   """
     doc2cluster={}
     count=0
     for doc in hashcorp:
